@@ -10,9 +10,12 @@ class ReplaceString
 	private $data_to_file;
 	private $old_url = '';
 	private $new_url = '';
-	private $transferred_old_url = '';
-	private $transferred_new_url = '';
+	private $encode_one_old_url = '';
+	private $encode_one_new_url = '';
+	private $encode_two_old_url = '';
+	private $encode_two_new_url = '';
 	private $line_count = 0;
+	private $http_base = 'http://';
 
 	public function __construct($init=array())
 	{
@@ -34,6 +37,7 @@ class ReplaceString
 		$config_path = '';
 		$data_from_file = '';
 		$data_to_file = '';
+
 		if (!empty($init)) {
 			list($config_path,$data_from_file,$data_to_file) = $init;
 		}
@@ -46,12 +50,16 @@ class ReplaceString
 			if (!file_exists($data_from_file)) {
 				throw new Exception("未找到需要替换的文件");
 			}else{
-				$this->old_url = 'http://'.$this->config['old_domain_name'];
-				$this->new_url = 'http://'.$this->config['new_domain_name'];
+				$this->old_url = $this->http_base.$this->config['old_domain_name'];
+				$this->new_url = $this->http_base.$this->config['new_domain_name'];
 
-				// http:// 转义后的替换
-				$this->transferred_old_url = 'http%3A%2F%2F'.$this->config['old_domain_name'];
-				$this->transferred_new_url = 'http%3A%2F%2F'.$this->config['new_domain_name'];
+				// http:// 编码一次
+				$this->encode_one_old_url = urlencode($this->http_base).$this->config['old_domain_name'];
+				$this->encode_one_new_url = urlencode($this->http_base).$this->config['new_domain_name'];
+
+				// http:// 编码两次次
+				$this->encode_two_old_url = urlencode(urlencode($this->http_base)).$this->config['old_domain_name'];
+				$this->encode_two_new_url = urlencode(urlencode($this->http_base)).$this->config['new_domain_name'];
 			}
 		} catch (Exception $e) {
 			$this->error($e->getMessage());
@@ -138,7 +146,8 @@ class ReplaceString
 		}else{
 			// 非序列化的字符串替换
 			$line_str = str_replace($this->old_url, $this->new_url, $line_str);
-			$line_str = str_replace($this->transferred_old_url, $this->transferred_new_url, $line_str);
+			$line_str = str_replace($this->encode_one_old_url, $this->encode_one_new_url, $line_str);
+			$line_str = str_replace($this->encode_two_old_url, $this->encode_two_new_url, $line_str);
 		}
 
 		// 写入新文件
